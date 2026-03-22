@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1B4332">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="은율 Daily Log">
+<title>은율 Daily Log</title>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --gd:#1B4332;--gm:#2D6A4F;--gl:#40916C;
+  --gs:#95D5B2;--cr:#FAF7F2;--cr2:#F0EBE0;
+  --gold:#C8963E;--gold2:#F0C97A;
+  --kk:#FEE500;--kkd:#3A1D1D;
+  --ink:#1A1A1A;--ink2:#4A4A4A;--ink3:#999;
+  --wh:#fff;--r:18px;--th:70px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{background:var(--gd);font-family:'Pretendard',-apple-system,sans-serif;color:var(--ink);display:flex;flex-direction:column;max-width:480px;margin:0 auto;overflow:hidden;}
+
+/* HEADER */
+.hdr{background:var(--gd);padding:50px 22px 14px;flex-shrink:0;position:relative;overflow:hidden;}
+.hdr::before{content:'';position:absolute;top:-60px;right:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(200,150,62,.2) 0%,transparent 65%);border-radius:50%;}
+.hdr-row{display:flex;justify-content:space-between;align-items:flex-start;position:relative;}
+.hdr-sub{font-size:10.5px;font-weight:600;color:var(--gs);letter-spacing:2px;text-transform:uppercase;margin-bottom:3px;opacity:.8;}
+.hdr-title{font-size:23px;font-weight:700;color:var(--cr);letter-spacing:-0.5px;}
+.hdr-title span{color:var(--gold2);}
+.hdr-date{color:var(--gs);font-size:11px;margin-top:4px;opacity:.75;}
+.streak{background:rgba(200,150,62,.18);border:1px solid rgba(200,150,62,.4);border-radius:20px;padding:6px 12px;color:var(--gold2);font-size:13px;font-weight:700;display:flex;align-items:center;gap:4px;flex-shrink:0;}
+
+/* AUTO SAVE BAR */
+.abar{background:rgba(0,0,0,.18);padding:5px 22px;display:flex;align-items:center;justify-content:space-between;}
+.abar-l{display:flex;align-items:center;gap:6px;font-size:10.5px;color:rgba(250,247,242,.45);}
+.sdot{width:6px;height:6px;border-radius:50%;background:var(--gs);flex-shrink:0;transition:background .3s;}
+.sdot.saving{background:var(--gold2);animation:pulse .8s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+.stime{font-size:10px;color:rgba(250,247,242,.35);}
+
+/* SCROLL */
+.scroll{flex:1;overflow-y:auto;background:var(--cr);border-radius:26px 26px 0 0;-webkit-overflow-scrolling:touch;padding-bottom:calc(var(--th)+64px);}
+.scroll::-webkit-scrollbar{display:none;}
+
+/* TABS */
+.tabs{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;height:var(--th);background:var(--gd);display:flex;align-items:center;justify-content:space-around;padding:0 4px 10px;z-index:100;border-top:1px solid rgba(255,255,255,.07);}
+.tb{display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 10px;border:none;background:none;cursor:pointer;border-radius:14px;color:var(--gs);opacity:.4;transition:all .2s;}
+.tb.on{opacity:1;background:rgba(149,213,178,.1);}
+.tb .ti{font-size:20px;line-height:1;}
+.tb .tl{font-size:9.5px;font-weight:700;color:inherit;}
+.tb.on .tl{color:var(--gold2);}
+
+/* VIEWS */
+.view{display:none;padding:20px 15px 0;animation:fi .22s ease;}
+.view.on{display:block;}
+@keyframes fi{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+/* CARDS */
+.card{background:var(--wh);border-radius:var(--r);padding:18px;margin-bottom:12px;box-shadow:0 2px 12px rgba(27,67,50,.07);}
+.stag{display:inline-flex;align-items:center;gap:5px;background:var(--gd);color:var(--cr);font-size:11px;font-weight:800;letter-spacing:.4px;padding:5px 13px;border-radius:20px;margin-bottom:16px;}
+.stag.af{background:var(--gold);}
+
+.fg{margin-bottom:15px;}
+.fg:last-child{margin-bottom:0;}
+.fl{font-size:12.5px;font-weight:700;color:var(--ink2);margin-bottom:7px;display:flex;align-items:center;gap:5px;}
+
+textarea,input[type="text"],input[type="time"]{width:100%;background:var(--cr2);border:2px solid transparent;border-radius:11px;padding:11px 13px;font-family:'Pretendard',sans-serif;font-size:13.5px;color:var(--ink);outline:none;line-height:1.6;transition:border-color .2s,background .2s;-webkit-appearance:none;}
+textarea:focus,input[type="text"]:focus,input[type="time"]:focus{border-color:var(--gl);background:var(--wh);}
+textarea{resize:none;min-height:76px;}
+input[type="time"]{width:auto;min-width:130px;cursor:pointer;}
+
+/* TIME ROW */
+.time-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.time-label{font-size:12.5px;color:var(--ink3);white-space:nowrap;}
+
+/* CHIPS */
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:3px;}
+.chip{background:var(--cr2);border:2px solid transparent;border-radius:18px;padding:5px 13px;font-size:12.5px;font-weight:500;cursor:pointer;transition:all .16s;color:var(--ink2);user-select:none;}
+.chip.on{background:var(--gd);color:var(--wh);border-color:var(--gd);}
+.chip.af.on{background:var(--gold);border-color:var(--gold);color:var(--wh);}
+
+/* STARS */
+.srow{display:flex;gap:3px;margin-top:3px;}
+.sbtn{background:none;border:none;font-size:20px;cursor:pointer;line-height:1;filter:grayscale(1);opacity:.18;transition:transform .12s;padding:2px;}
+.sbtn.on{filter:none;opacity:1;}
+.sbtn:active{transform:scale(1.2);}
+
+/* FIXED BOTTOM BUTTONS */
+.fixed-btns{position:fixed;bottom:var(--th);left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--cr);padding:8px 15px 6px;z-index:99;border-top:1px solid rgba(0,0,0,.06);box-shadow:0 -4px 16px rgba(27,67,50,.08);display:none;}
+.fixed-btns.on{display:block;}
+
+/* MOOD */
+.mrow{display:flex;gap:6px;margin-top:3px;}
+.mbtn{flex:1;background:var(--cr2);border:2px solid transparent;border-radius:13px;padding:10px 3px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;transition:all .16s;}
+.mbtn .me{font-size:20px;}
+.mbtn .mt{font-size:9.5px;font-weight:700;color:var(--ink3);}
+.mbtn.on{border-color:var(--gl);background:var(--gs);}
+.mbtn.on .mt{color:var(--gd);}
+
+/* TYPE */
+.trow{display:flex;gap:7px;margin-top:3px;}
+.tybtn{flex:1;background:var(--cr2);border:2px solid transparent;border-radius:11px;padding:9px 3px;text-align:center;cursor:pointer;font-size:12px;font-weight:600;color:var(--ink2);transition:all .16s;font-family:'Pretendard',sans-serif;}
+.tybtn.on{background:var(--gold);color:var(--wh);border-color:var(--gold);}
+
+/* PLEDGE */
+.plcard{background:linear-gradient(135deg,#163829,var(--gd));border-radius:var(--r);padding:18px;margin-bottom:12px;position:relative;overflow:hidden;}
+.plcard::before{content:'✦';position:absolute;right:18px;top:12px;color:rgba(200,150,62,.28);font-size:36px;}
+.plcard textarea{background:rgba(255,255,255,.1);color:var(--cr);border-color:rgba(255,255,255,.14);font-size:14px;font-style:italic;}
+.plcard textarea::placeholder{color:rgba(250,247,242,.33);}
+.plcard textarea:focus{border-color:var(--gold2);background:rgba(255,255,255,.15);}
+.pllabel{color:var(--gold2);font-size:14px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+
+.afplcard{background:linear-gradient(135deg,#7C4D1E,#A0712A);border-radius:var(--r);padding:18px;margin-bottom:12px;position:relative;overflow:hidden;}
+.afplcard::before{content:'✦';position:absolute;right:18px;top:12px;color:rgba(255,255,255,.13);font-size:36px;}
+.afplcard textarea{background:rgba(255,255,255,.14);color:var(--wh);border-color:rgba(255,255,255,.14);font-size:14px;font-style:italic;}
+.afplcard textarea::placeholder{color:rgba(255,255,255,.33);}
+.afplcard textarea:focus{border-color:rgba(255,255,255,.5);background:rgba(255,255,255,.2);}
+.afplcard .pllabel{color:rgba(255,255,255,.9);}
+
+/* BUTTON ROW */
+.brow{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px;}
+.savebtn{width:100%;border:none;border-radius:13px;padding:16px 8px;font-family:'Pretendard',sans-serif;font-size:13.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .18s;background:var(--gd);color:var(--cr);}
+.savebtn:active{transform:scale(.97);background:var(--gl);}
+.savebtn.af{background:var(--gold);}
+.savebtn.af:active{background:#b8822e;}
+.kbtn{width:100%;background:var(--kk);color:var(--kkd);border:none;border-radius:13px;padding:16px 8px;font-family:'Pretendard',sans-serif;font-size:13.5px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .18s;}
+.kbtn:active{transform:scale(.97);filter:brightness(.93);}
+
+/* HOME */
+.hgreet{font-size:21px;font-weight:700;margin-bottom:4px;}
+.hsub{font-size:12.5px;color:var(--ink3);margin-bottom:18px;line-height:1.5;}
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.scard{background:var(--wh);border-radius:var(--r);padding:16px;box-shadow:0 2px 10px rgba(27,67,50,.06);cursor:pointer;}
+.scard .si{font-size:24px;margin-bottom:6px;}
+.scard .sl{font-size:10.5px;font-weight:600;color:var(--ink3);margin-bottom:5px;}
+.ss{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:9px;display:inline-block;}
+.ss.done{background:var(--gs);color:var(--gd);}
+.ss.pend{background:#FEF3C7;color:#92400E;}
+.qbtns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.qbtn{border:none;border-radius:var(--r);padding:16px;cursor:pointer;font-family:'Pretendard',sans-serif;font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:7px;transition:all .16s;line-height:1.3;}
+.qbtn.sc{background:var(--gd);color:var(--cr);}
+.qbtn.af{background:var(--gold);color:var(--wh);}
+.qbtn:active{transform:scale(.97);}
+.khome{width:100%;background:var(--kk);color:var(--kkd);border:none;border-radius:15px;padding:15px;font-family:'Pretendard',sans-serif;font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:14px;transition:all .18s;}
+.khome:active{filter:brightness(.93);transform:scale(.98);}
+.rccard{background:var(--wh);border-radius:var(--r);padding:18px;margin-bottom:12px;box-shadow:0 2px 10px rgba(27,67,50,.05);}
+.rctit{font-size:11px;font-weight:700;color:var(--ink3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px;}
+.rctext{font-size:14px;color:var(--ink);line-height:1.7;font-style:italic;}
+
+/* RECORDS */
+.rechdr{margin-bottom:16px;}
+.rechdr h2{font-size:18px;font-weight:700;}
+.rechdr p{font-size:12.5px;color:var(--ink3);margin-top:2px;}
+.recitem{background:var(--wh);border-radius:var(--r);padding:15px 17px;margin-bottom:10px;box-shadow:0 2px 9px rgba(27,67,50,.05);cursor:pointer;transition:all .16s;}
+.recitem:active{transform:scale(.99);}
+.recdate{font-size:11.5px;color:var(--ink3);margin-bottom:6px;font-weight:500;}
+.recbadges{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:6px;}
+.recbadge{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:9px;}
+.recbadge.sc{background:var(--gs);color:var(--gd);}
+.recbadge.af{background:#FEF3C7;color:#92400E;}
+.recpl{font-size:12.5px;color:var(--ink2);font-style:italic;line-height:1.5;border-left:3px solid var(--gs);padding-left:9px;margin-top:6px;}
+.empty{text-align:center;padding:56px 20px;color:var(--ink3);}
+.empty .ei{font-size:46px;margin-bottom:12px;}
+.empty p{font-size:13.5px;line-height:1.7;}
+
+/* SETTINGS */
+.setcard{background:var(--wh);border-radius:var(--r);padding:18px;margin-bottom:12px;box-shadow:0 2px 10px rgba(27,67,50,.05);}
+.settit{font-size:13.5px;font-weight:700;color:var(--ink);margin-bottom:3px;}
+.setdesc{font-size:12px;color:var(--ink3);margin-bottom:12px;line-height:1.6;}
+.setrow{display:flex;gap:7px;}
+.setrow input[type="text"]{flex:1;font-size:12px;padding:9px 11px;}
+.setsave{background:var(--gd);color:var(--cr);border:none;border-radius:11px;padding:9px 14px;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+.setstatus{margin-top:7px;font-size:12px;color:var(--gl);font-weight:600;}
+
+/* MODAL */
+.moverlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:300;display:none;align-items:flex-end;max-width:480px;margin:0 auto;left:50%;transform:translateX(-50%);}
+.moverlay.open{display:flex;}
+.msheet{background:var(--cr);border-radius:26px 26px 0 0;width:100%;max-height:87vh;overflow-y:auto;padding:16px 18px 38px;animation:ss .28s ease;}
+@keyframes ss{from{transform:translateY(100%);}to{transform:translateY(0);}}
+.mhandle{width:38px;height:4px;background:var(--ink3);border-radius:2px;margin:0 auto 16px;opacity:.22;}
+.mtop{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;}
+.mtitle{font-size:17px;font-weight:700;}
+.mdate{font-size:11.5px;color:var(--ink3);margin-top:2px;}
+.mclose{background:var(--cr2);border:none;border-radius:50%;width:30px;height:30px;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.msec{margin-bottom:11px;}
+.mslabel{font-size:10.5px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;}
+.mscontent{font-size:13.5px;color:var(--ink);line-height:1.7;}
+.mplbox{background:var(--gd);color:var(--cr);border-radius:13px;padding:12px 14px;font-size:13.5px;font-style:italic;line-height:1.6;}
+.mafplbox{background:var(--gold);color:var(--wh);border-radius:13px;padding:12px 14px;font-size:13.5px;font-style:italic;line-height:1.6;}
+.mbhdr{border-radius:11px;padding:8px 13px;font-size:11.5px;font-weight:800;margin-bottom:12px;display:inline-flex;align-items:center;gap:5px;}
+.mbhdr.sc{background:var(--gd);color:var(--cr);}
+.mbhdr.af{background:var(--gold);color:var(--wh);}
+.mdiv{height:1px;background:var(--cr2);margin:14px 0;}
+.mkbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px;}
+.mkbtn{background:var(--kk);color:var(--kkd);border:none;border-radius:13px;padding:13px 8px;font-family:'Pretendard',sans-serif;font-size:12.5px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;}
+.mkbtn.single{grid-column:1/-1;}
+
+/* TOAST */
+.toast{position:fixed;bottom:82px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--gd);color:var(--cr);padding:11px 20px;border-radius:28px;font-size:13.5px;font-weight:600;opacity:0;transition:all .28s;z-index:400;white-space:nowrap;pointer-events:none;box-shadow:0 4px 18px rgba(0,0,0,.22);}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.kk{background:var(--kk);color:var(--kkd);}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-row">
+    <div>
+      <div class="hdr-sub">Daily Log</div>
+      <div class="hdr-title">은율 <span>Daily Log</span></div>
+      <div class="hdr-date" id="hdate"></div>
+    </div>
+    <div class="streak">🔥 <span id="streak">0</span>일</div>
+  </div>
+</div>
+
+<!-- AUTO SAVE BAR -->
+<div class="abar">
+  <div class="abar-l"><div class="sdot saved" id="sdot"></div><span id="slabel">자동저장 켜짐</span></div>
+  <span class="stime" id="stime"></span>
+</div>
+
+<div class="scroll" id="scroll">
+
+  <!-- ◆ HOME ◆ -->
+  <div class="view on" id="view-home">
+    <div class="hgreet" id="hgreet">안녕, 은율 👋</div>
+    <div class="hsub" id="hsub">오늘 기록을 시작해볼까요?</div>
+    <div class="sgrid">
+      <div class="scard" onclick="go('school')"><div class="si">🏫</div><div class="sl">학교 기록</div><div class="ss pend" id="ssSc">미완성</div></div>
+      <div class="scard" onclick="go('after')"><div class="si">📚</div><div class="sl">방과후 기록</div><div class="ss pend" id="ssAf">미완성</div></div>
+    </div>
+    <div class="qbtns">
+      <button class="qbtn sc" onclick="go('school')">🏫<span>학교<br>기록하기</span></button>
+      <button class="qbtn af" onclick="go('after')">📚<span>방과후<br>기록하기</span></button>
+    </div>
+    <div class="rccard">
+      <div class="rctit">✨ 최근 나의 다짐</div>
+      <div class="rctext" id="rcpl" style="color:var(--ink3);font-style:normal;">아직 기록된 다짐이 없어요</div>
+    </div>
+  </div>
+
+  <!-- ◆ SCHOOL ◆ -->
+  <div class="view" id="view-school">
+    <div class="card">
+      <div class="stag">🏫 학교 수업 기록</div>
+
+      <div class="fg">
+        <div class="fl">⏰ 학교 종료 시간</div>
+        <div class="time-row">
+          <input type="time" id="scEndTime" onchange="autoSave('sc')">
+          <span class="time-label">에 학교 끝남</span>
+        </div>
+      </div>
+
+      <div class="fg">
+        <div class="fl">📅 오늘 수업한 과목 <span style="font-weight:400;font-size:11px;color:var(--ink3)">(복수 선택)</span></div>
+        <div class="chips" id="scSubj">
+          <div class="chip" onclick="tcSc(this)">국어</div><div class="chip" onclick="tcSc(this)">영어</div>
+          <div class="chip" onclick="tcSc(this)">수학</div><div class="chip" onclick="tcSc(this)">과학</div>
+          <div class="chip" onclick="tcSc(this)">사회</div><div class="chip" onclick="tcSc(this)">역사</div>
+          <div class="chip" onclick="tcSc(this)">도덕/윤리</div><div class="chip" onclick="tcSc(this)">체육</div>
+          <div class="chip" onclick="tcSc(this)">음악</div><div class="chip" onclick="tcSc(this)">미술</div>
+          <div class="chip" onclick="tcSc(this)">정보</div><div class="chip" onclick="tcSc(this)">한문</div>
+        </div>
+      </div>
+
+      <div class="fg">
+        <div class="fl">📝 오늘 배운 내용 전반</div>
+        <textarea id="scContent" placeholder="오늘 수업에서 배운 핵심 내용을 간략히 적어봐요…" rows="3" oninput="debSave('sc')"></textarea>
+      </div>
+
+      <div class="fg">
+        <div class="fl">🤔 어려웠던 내용 &amp; 느낀점</div>
+        <textarea id="scHard" placeholder="이해가 잘 안 됐거나 헷갈린 부분, 오늘 수업에서 느낀 점…" rows="3" oninput="debSave('sc')"></textarea>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="stag">🪞 나의 태도 &amp; 평가</div>
+
+      <div class="fg">
+        <div class="fl">😊 오늘 나의 태도는?</div>
+        <div class="mrow">
+          <button class="mbtn" onclick="setMood('sc','bad',this)"><span class="me">😔</span><span class="mt">아쉬워요</span></button>
+          <button class="mbtn" onclick="setMood('sc','ok',this)"><span class="me">😐</span><span class="mt">보통이에요</span></button>
+          <button class="mbtn" onclick="setMood('sc','good',this)"><span class="me">😊</span><span class="mt">잘했어요</span></button>
+          <button class="mbtn" onclick="setMood('sc','great',this)"><span class="me">🔥</span><span class="mt">최고였어요</span></button>
+        </div>
+      </div>
+
+      <div class="fg">
+        <div class="fl">⭐ 집중도</div>
+        <div class="srow" id="scFocus">
+          <button class="sbtn" onclick="setStar('scFocus',1,'sc')">⭐</button><button class="sbtn" onclick="setStar('scFocus',2,'sc')">⭐</button>
+          <button class="sbtn" onclick="setStar('scFocus',3,'sc')">⭐</button><button class="sbtn" onclick="setStar('scFocus',4,'sc')">⭐</button>
+          <button class="sbtn" onclick="setStar('scFocus',5,'sc')">⭐</button>
+        </div>
+      </div>
+
+      <div class="fg">
+        <div class="fl">💪 노력도</div>
+        <div class="srow" id="scEffort">
+          <button class="sbtn" onclick="setStar('scEffort',1,'sc')">⭐</button><button class="sbtn" onclick="setStar('scEffort',2,'sc')">⭐</button>
+          <button class="sbtn" onclick="setStar('scEffort',3,'sc')">⭐</button><button class="sbtn" onclick="setStar('scEffort',4,'sc')">⭐</button>
+          <button class="sbtn" onclick="setStar('scEffort',5,'sc')">⭐</button>
+        </div>
+      </div>
+
+      <div class="fg">
+        <div class="fl">🩺 몸 컨디션</div>
+        <div class="srow" id="scBody">
+          <button class="sbtn" onclick="setStar('scBody',1,'sc')">💙</button><button class="sbtn" onclick="setStar('scBody',2,'sc')">💙</button>
+          <button class="sbtn" onclick="setStar('scBody',3,'sc')">💙</button><button class="sbtn" onclick="setStar('scBody',4,'sc')">💙</button>
+          <button class="sbtn" onclick="setStar('scBody',5,'sc')">💙</button>
+        </div>
+      </div>
+
+      <div class="fg">
+        <div class="fl">📋 나 자신에게 한 줄 평가</div>
+        <textarea id="scEval" placeholder="오늘 수업에서 나는 어떤 학생이었나요?" rows="2" oninput="debSave('sc')"></textarea>
+      </div>
+
+      <div class="fg">
+        <div class="fl">📌 메모</div>
+        <textarea id="scMemo" placeholder="내일 준비물, 시험 일정, 기억할 것들…" rows="2" oninput="debSave('sc')"></textarea>
+      </div>
+    </div>
+
+    <div class="plcard">
+      <div class="pllabel">✍️ 나에게 다짐하는 말</div>
+      <textarea id="scPledge" placeholder="스스로에게 약속하고 싶은 말을 적어봐요…" rows="3" oninput="debSave('sc')"></textarea>
+    </div>
+
+    <div style="height:8px;"></div>
+  </div>
+
+  <!-- ◆ AFTER ◆ -->
+  <div class="view" id="view-after">
+    <div class="card">
+      <div class="stag af">📚 방과후 활동 기록</div>
+
+      <div class="fg">
+        <div class="fl">⏰ 방과후 종료 시간</div>
+        <div class="time-row">
+          <input type="time" id="afEndTime" onchange="autoSave('af')">
+          <span class="time-label">에 끝남</span>
+        </div>
+      </div>
+
+      <div class="fg">
+        <div class="fl">🏷️ 활동 종류</div>
+        <div class="trow">
+          <button class="tybtn on" onclick="selType(this,'학원')">🏢 학원</button>
+          <button class="tybtn" onclick="selType(this,'자습')">📖 자습</button>
+          <button class="tybtn" onclick="selType(this,'과외')">👩‍🏫 과외</button>
+          <button class="tybtn" onclick="selType(this,'독서')">📗 독서</button>
+        </div>
+      </div>
+
+      <div class="fg">
+        <div class="fl">📌 과목 <span style="font-weight:400;font-size:11px;color:var(--ink3)">(복수 선택)</span></div>
+        <div class="chips" id="afSubj">
+          <div class="chip af" onclick="tcAf(this)">국어</div><div class="chip af" onclick="tcAf(this)">영어</div>
+          <div class="chip af" onclick="tcAf(this)">수학</div><div class="chip af" onclick="tcAf(this)">과학</div>
+          <div class="chip af" onclick="tcAf(this)">사회/역사</div><div class="chip af" onclick="tcAf(this)">논술</div>
+          <div class="chip af" onclick="tcAf(this)">작문/에세이</div><div class="chip af" onclick="tcAf(this)">예체능</div>
+          <div class="chip af" onclick="tcAf(this)">코딩</div>
+        </div>
+      </div>
+
+      <div class="fg">
+        <div class="fl">📝 오늘 공부한 내용</div>
+        <textarea id="afContent" placeholder="학원이나 자습에서 무엇을 배우고 공부했나요?" rows="3" oninput="debSave('af')"></textarea>
+      </div>
+
+      <div class="fg">
+        <div class="fl">🤔 어려웠던 내용 &amp; 느낀점</div>
+        <textarea id="afHard" placeholder="막혔던 부분, 오늘 공부하면서 느낀 점…" rows="3" oninput="debSave('af')"></textarea>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="stag af">🪞 나의 태도 &amp; 평가</div>
+
+      <div class="fg">
+        <div class="fl">😊 방과후 나의 태도는?</div>
+        <div class="mrow">
+          <button class="mbtn" onclick="setMood('af','bad',this)"><span class="me">😔</span><span class="mt">아쉬워요</span></button>
+          <button class="mbtn" onclick="setMood('af','ok',this)"><span class="me">😐</span><span class="mt">보통이에요</span></button>
+          <button class="mbtn" onclick="setMood('af','good',this)"><span class="me">😊</span><span class="mt">잘했어요</span></button>
+          <button class="mbtn" onclick="setMood('af','great',this)"><span class="me">🔥</span><span class="mt">최고였어요</span></button>
+        </div>
+      </div>
+
+      <div class="fg">
+        <div class="fl">⭐ 집중도</div>
+        <div class="srow" id="afFocus">
+          <button class="sbtn" onclick="setStar('afFocus',1,'af')">⭐</button><button class="sbtn" onclick="setStar('afFocus',2,'af')">⭐</button>
+          <button class="sbtn" onclick="setStar('afFocus',3,'af')">⭐</button><button class="sbtn" onclick="setStar('afFocus',4,'af')">⭐</button>
+          <button class="sbtn" onclick="setStar('afFocus',5,'af')">⭐</button>
+        </div>
+      </div>
+
+      <div class="fg">
+        <div class="fl">💪 노력도</div>
+        <div class="srow" id="afEffort">
+          <button class="sbtn" onclick="setStar('afEffort',1,'af')">⭐</button><button class="sbtn" onclick="setStar('afEffort',2,'af')">⭐</button>
+          <button class="sbtn" onclick="setStar('afEffort',3,'af')">⭐</button><button class="sbtn" onclick="setStar('afEffort',4,'af')">⭐</button>
+          <button class="sbtn" onclick="setStar('afEffort',5,'af')">⭐</button>
+        </div>
+      </div>
+
+      <div class="fg">
+        <div class="fl">🩺 몸 컨디션</div>
+        <div class="srow" id="afBody">
+          <button class="sbtn" onclick="setStar('afBody',1,'af')">💙</button><button class="sbtn" onclick="setStar('afBody',2,'af')">💙</button>
+          <button class="sbtn" onclick="setStar('afBody',3,'af')">💙</button><button class="sbtn" onclick="setStar('afBody',4,'af')">💙</button>
+          <button class="sbtn" onclick="setStar('afBody',5,'af')">💙</button>
+        </div>
+      </div>
+
+      <div class="fg">
+        <div class="fl">📋 나 자신에게 한 줄 평가</div>
+        <textarea id="afEval" placeholder="방과후 활동에서 나는 어땠나요?" rows="2" oninput="debSave('af')"></textarea>
+      </div>
+
+      <div class="fg">
+        <div class="fl">📌 메모</div>
+        <textarea id="afMemo" placeholder="숙제, 내일 준비, 기억할 것들…" rows="2" oninput="debSave('af')"></textarea>
+      </div>
+    </div>
+
+    <div class="afplcard">
+      <div class="pllabel">✍️ 나에게 다짐하는 말</div>
+      <textarea id="afPledge" placeholder="스스로에게 약속하고 싶은 말을 적어봐요…" rows="3" oninput="debSave('af')"></textarea>
+    </div>
+
+    <div style="height:8px;"></div>
+  </div>
+
+  <!-- ◆ RECORDS ◆ -->
+  <div class="view" id="view-records">
+    <div class="rechdr">
+      <h2>나의 성장 기록 📓</h2>
+      <p>지금까지 <strong id="totCnt">0</strong>일의 기록이 있어요</p>
+    </div>
+    <div id="recList"></div>
+  </div>
+
+  <!-- ◆ SETTINGS ◆ -->
+  <div class="view" id="view-settings">
+    <div class="setcard">
+      <div class="settit">🔗 Google Sheets 연동</div>
+      <div class="setdesc">Apps Script 배포 URL 입력 시 모든 기록이 구글 시트에도 자동 저장돼요.</div>
+      <div class="setrow"><input type="text" id="sheetUrl" placeholder="https://script.google.com/..."/><button class="setsave" onclick="saveUrl()">저장</button></div>
+      <div class="setstatus" id="sstatus"></div>
+    </div>
+    <div class="setcard">
+      <div class="settit">💬 오픈채팅 공유 방법</div>
+      <div class="setdesc">공유 버튼 → 내용 자동 복사 → 채팅방 오픈 → <strong>꾹 눌러 붙여넣기</strong>만 하면 끝!</div>
+    </div>
+    <div class="setcard">
+      <div class="settit">💾 자동저장 안내</div>
+      <div class="setdesc">글자 입력 후 1초 뒤 자동저장 / 별점·태도·칩 선택 시 즉시 저장<br>날짜가 바뀌면 새 화면으로 시작, 이전 기록은 📋 기록 탭에 보존</div>
+    </div>
+    <div class="setcard">
+      <div class="settit">📲 홈 화면 아이콘 설치</div>
+      <div class="setdesc"><b>Android (크롬)</b> — 메뉴(⋮) → 홈 화면에 추가<br><b>iPhone (사파리)</b> — 공유(□↑) → 홈 화면에 추가</div>
+    </div>
+  </div>
+
+</div><!-- /scroll -->
+
+<!-- FIXED BOTTOM ACTION BUTTONS -->
+<div class="fixed-btns" id="fb-school">
+  <div class="brow">
+    <button class="savebtn" onclick="manualSave('sc')">🏫 저장하기</button>
+    <button class="kbtn" onclick="sendSchool()">💬 오픈채팅 공유</button>
+  </div>
+</div>
+<div class="fixed-btns" id="fb-after">
+  <div class="brow">
+    <button class="savebtn af" onclick="manualSave('af')">📚 저장하기</button>
+    <button class="kbtn" onclick="sendAfter()">💬 오픈채팅 공유</button>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tb on" onclick="go('home')" id="tab-home"><span class="ti">🏠</span><span class="tl">홈</span></button>
+  <button class="tb" onclick="go('school')" id="tab-school"><span class="ti">🏫</span><span class="tl">학교</span></button>
+  <button class="tb" onclick="go('after')" id="tab-after"><span class="ti">📚</span><span class="tl">방과후</span></button>
+  <button class="tb" onclick="go('records')" id="tab-records"><span class="ti">📋</span><span class="tl">기록</span></button>
+  <button class="tb" onclick="go('settings')" id="tab-settings"><span class="ti">⚙️</span><span class="tl">설정</span></button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- MODAL -->
+<div class="moverlay" id="moverlay" onclick="mclick(event)">
+  <div class="msheet">
+    <div class="mhandle"></div>
+    <div class="mtop">
+      <div><div class="mtitle" id="mtitle"></div><div class="mdate" id="mdatelbl"></div></div>
+      <button class="mclose" onclick="closeM()">✕</button>
+    </div>
+    <div id="mbody"></div>
+    <div class="mkbtns" id="mkbtns"></div>
+  </div>
+</div>
+
+<script>
+const KAKAO='https://open.kakao.com/o/gh0HBDmi';
+const DAYS=['일','월','화','수','목','금','토'];
+const MMAP={bad:'😔 아쉬워요',ok:'😐 보통이에요',good:'😊 잘했어요',great:'🔥 최고였어요'};
+const bstars=n=>n?'💙'.repeat(n)+'🩶'.repeat(5-n):'-';
+const sstars=n=>n?'⭐'.repeat(n)+'☆'.repeat(5-n):'-';
+
+// STATE
+const S={
+  scMood:null,afMood:null,afType:'학원',
+  stars:{scFocus:0,scEffort:0,scBody:0,afFocus:0,afEffort:0,afBody:0},
+  modalKey:null,debSc:null,debAf:null
+};
+
+// DATE
+const now=new Date(),dk=now.toISOString().split('T')[0];
+const dl=`${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 (${DAYS[now.getDay()]})`;
+document.getElementById('hdate').textContent=dl;
+const hr=now.getHours();
+document.getElementById('hgreet').textContent=hr<12?'좋은 아침이야, 은율 ☀️':hr<18?'안녕, 은율 👋':'오늘도 수고했어, 은율 🌙';
+
+// TABS
+function go(tab){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+  document.querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
+  document.getElementById('view-'+tab).classList.add('on');
+  document.getElementById('tab-'+tab).classList.add('on');
+  document.getElementById('scroll').scrollTop=0;
+  // fixed 버튼 표시/숨김
+  document.getElementById('fb-school').classList.toggle('on', tab==='school');
+  document.getElementById('fb-after').classList.toggle('on', tab==='after');
+  if(tab==='records')renderRec();
+  if(tab==='settings')loadUrl();
+}
+
+// CHIPS
+function tcSc(el){el.classList.toggle('on');autoSave('sc');}
+function tcAf(el){el.classList.toggle('on');autoSave('af');}
+function chips(id){return Array.from(document.querySelectorAll('#'+id+' .chip.on')).map(c=>c.textContent.trim());}
+
+// STARS
+function setStar(gid,val,sec){
+  S.stars[gid]=val;
+  document.querySelectorAll('#'+gid+' .sbtn').forEach((b,i)=>b.classList.toggle('on',i<val));
+  autoSave(sec);
+}
+
+// MOOD
+function setMood(sec,val,el){
+  S[sec+'Mood']=val;
+  el.closest('.mrow').querySelectorAll('.mbtn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  autoSave(sec);
+}
+
+// TYPE
+function selType(el,val){
+  S.afType=val;
+  document.querySelectorAll('.tybtn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  autoSave('af');
+}
+
+// STORAGE
+function getRec(){try{return JSON.parse(localStorage.getItem('eu_dl_v1')||'{}')}catch{return{}}}
+function putRec(r){localStorage.setItem('eu_dl_v1',JSON.stringify(r));}
+function getUrl(){return localStorage.getItem('eu_sheeturl')||'';}
+function saveUrl(){
+  const v=document.getElementById('sheetUrl').value.trim();
+  if(!v){document.getElementById('sstatus').textContent='URL을 입력해주세요';return;}
+  localStorage.setItem('eu_sheeturl',v);document.getElementById('sstatus').textContent='✓ 저장 완료';
+}
+function loadUrl(){const el=document.getElementById('sheetUrl');if(el)el.value=getUrl();}
+
+// SYNC DOT
+function syncShow(saving){
+  const d=document.getElementById('sdot');
+  d.className='sdot '+(saving?'saving':'saved');
+  document.getElementById('slabel').textContent=saving?'저장 중…':'자동저장 완료 ✓';
+}
+function syncDone(){
+  syncShow(false);
+  document.getElementById('stime').textContent=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+  setTimeout(()=>{document.getElementById('slabel').textContent='자동저장 켜짐';},2000);
+}
+
+// COLLECT
+function colSc(){return{
+  endTime:document.getElementById('scEndTime').value||'',
+  subjects:chips('scSubj'),
+  content:document.getElementById('scContent').value.trim(),
+  hard:document.getElementById('scHard').value.trim(),
+  eval:document.getElementById('scEval').value.trim(),
+  memo:document.getElementById('scMemo').value.trim(),
+  pledge:document.getElementById('scPledge').value.trim(),
+  mood:S.scMood,
+  focus:S.stars.scFocus,effort:S.stars.scEffort,body:S.stars.scBody
+};}
+function colAf(){return{
+  endTime:document.getElementById('afEndTime').value||'',
+  actType:S.afType,
+  subjects:chips('afSubj'),
+  content:document.getElementById('afContent').value.trim(),
+  hard:document.getElementById('afHard').value.trim(),
+  eval:document.getElementById('afEval').value.trim(),
+  memo:document.getElementById('afMemo').value.trim(),
+  pledge:document.getElementById('afPledge').value.trim(),
+  mood:S.afMood,
+  focus:S.stars.afFocus,effort:S.stars.afEffort,body:S.stars.afBody
+};}
+
+// AUTO SAVE (debounce for textarea, instant for others)
+function debSave(sec){
+  if(sec==='sc'){clearTimeout(S.debSc);S.debSc=setTimeout(()=>autoSave('sc'),1000);}
+  else{clearTimeout(S.debAf);S.debAf=setTimeout(()=>autoSave('af'),1000);}
+}
+function autoSave(sec){
+  syncShow(true);
+  const r=getRec();if(!r[dk])r[dk]={};
+  if(sec==='sc')r[dk].school={...colSc(),savedAt:new Date().toISOString()};
+  else r[dk].after={...colAf(),savedAt:new Date().toISOString()};
+  putRec(r);
+  updHome();updStreak();updPledge();
+  syncDone();
+  pushSheet({type:sec==='sc'?'school':'after',date:dk,...(sec==='sc'?colSc():colAf())});
+}
+function manualSave(sec){
+  autoSave(sec);
+  toast(sec==='sc'?'🏫 학교 기록 저장 완료!':'📚 방과후 기록 저장 완료!');
+}
+
+// GOOGLE SHEETS
+async function pushSheet(data){
+  const url=getUrl();if(!url)return;
+  try{await fetch(url,{method:'POST',body:JSON.stringify(data)});}catch{}
+}
+
+// HOME STATUS
+function updHome(){
+  const t=getRec()[dk]||{};
+  const ss=document.getElementById('ssSc'),as=document.getElementById('ssAf');
+  ss.textContent=t.school?'✅ 완료':'미완성';ss.className='ss '+(t.school?'done':'pend');
+  as.textContent=t.after?'✅ 완료':'미완성';as.className='ss '+(t.after?'done':'pend');
+  const sub=document.getElementById('hsub');
+  if(t.school&&t.after)sub.textContent='오늘 기록 모두 완성! 🎉';
+  else if(t.school||t.after)sub.textContent='절반 완성! 나머지도 기록해볼까요? 💪';
+  else sub.textContent='오늘 기록을 시작해볼까요?';
+}
+function updStreak(){
+  const r=getRec();let s=0;const b=new Date();
+  for(let i=0;i<365;i++){const d=new Date(b);d.setDate(d.getDate()-i);const k=d.toISOString().split('T')[0];if(r[k]&&(r[k].school||r[k].after))s++;else if(i>0)break;}
+  document.getElementById('streak').textContent=s;
+}
+function updPledge(){
+  const r=getRec();const keys=Object.keys(r).sort().reverse();let pl='';
+  for(const k of keys){if(r[k].school?.pledge){pl=r[k].school.pledge;break;}if(r[k].after?.pledge){pl=r[k].after.pledge;break;}}
+  const el=document.getElementById('rcpl');
+  if(pl){el.textContent='"'+pl+'"';el.style.color='var(--ink)';el.style.fontStyle='italic';}
+  else{el.textContent='아직 기록된 다짐이 없어요';el.style.color='var(--ink3)';el.style.fontStyle='normal';}
+}
+
+// LOAD TODAY DATA
+function loadToday(){
+  const t=getRec()[dk]||{};
+  if(t.school){
+    const s=t.school;
+    if(s.endTime)document.getElementById('scEndTime').value=s.endTime;
+    if(s.content)document.getElementById('scContent').value=s.content;
+    if(s.hard)document.getElementById('scHard').value=s.hard;
+    if(s.eval)document.getElementById('scEval').value=s.eval;
+    if(s.memo)document.getElementById('scMemo').value=s.memo;
+    if(s.pledge)document.getElementById('scPledge').value=s.pledge;
+    if(s.subjects)s.subjects.forEach(sub=>document.querySelectorAll('#scSubj .chip').forEach(c=>{if(c.textContent.trim()===sub)c.classList.add('on');}));
+    if(s.mood){S.scMood=s.mood;document.querySelectorAll('#view-school .mrow .mbtn').forEach(b=>{if(b.querySelector('.me')&&getMoodVal(b)===s.mood)b.classList.add('on');});}
+    if(s.focus)setStar('scFocus',s.focus,'sc');
+    if(s.effort)setStar('scEffort',s.effort,'sc');
+    if(s.body)setStar('scBody',s.body,'sc');
+  }
+  if(t.after){
+    const a=t.after;
+    if(a.endTime)document.getElementById('afEndTime').value=a.endTime;
+    if(a.content)document.getElementById('afContent').value=a.content;
+    if(a.hard)document.getElementById('afHard').value=a.hard;
+    if(a.eval)document.getElementById('afEval').value=a.eval;
+    if(a.memo)document.getElementById('afMemo').value=a.memo;
+    if(a.pledge)document.getElementById('afPledge').value=a.pledge;
+    if(a.actType){S.afType=a.actType;document.querySelectorAll('.tybtn').forEach(b=>{if(b.textContent.includes(a.actType))b.classList.add('on');else b.classList.remove('on');});}
+    if(a.subjects)a.subjects.forEach(sub=>document.querySelectorAll('#afSubj .chip').forEach(c=>{if(c.textContent.trim()===sub)c.classList.add('on');}));
+    if(a.mood){S.afMood=a.mood;document.querySelectorAll('#view-after .mrow .mbtn').forEach(b=>{if(getMoodVal(b)===a.mood)b.classList.add('on');});}
+    if(a.focus)setStar('afFocus',a.focus,'af');
+    if(a.effort)setStar('afEffort',a.effort,'af');
+    if(a.body)setStar('afBody',a.body,'af');
+  }
+}
+function getMoodVal(btn){
+  const em=btn.querySelector('.me')?.textContent||'';
+  if(em==='😔')return'bad';if(em==='😐')return'ok';if(em==='😊')return'good';if(em==='🔥')return'great';return'';
+}
+
+// FORMAT KAKAO
+function fmtSc(d,date){
+  let m=`📋 은율 Daily Log | ${date}\n━━━━━━━━━━━━━━━━━━\n🏫 학교 수업 기록\n`;
+  if(d.endTime)m+=`⏰ 종료 시간: ${d.endTime}\n`;
+  m+='\n';
+  if(d.subjects?.length)m+=`📌 수업 과목: ${d.subjects.join(', ')}\n\n`;
+  if(d.content)m+=`📝 배운 내용:\n${d.content}\n\n`;
+  if(d.hard)m+=`🤔 어려웠던 내용:\n${d.hard}\n\n`;
+  m+=`🪞 나의 태도 & 평가\n`;
+  if(d.mood)m+=`• 태도: ${MMAP[d.mood]}\n`;
+  if(d.focus)m+=`• 집중도: ${sstars(d.focus)}\n`;
+  if(d.effort)m+=`• 노력도: ${sstars(d.effort)}\n`;
+  if(d.body)m+=`• 몸 컨디션: ${bstars(d.body)}\n`;
+  if(d.eval)m+=`• 자기 평가: ${d.eval}\n`;
+  if(d.memo)m+=`\n📌 메모: ${d.memo}\n`;
+  if(d.pledge)m+=`\n✍️ 나의 다짐:\n"${d.pledge}"`;
+  return m.trim();
+}
+function fmtAf(d,date){
+  let m=`📋 은율 Daily Log | ${date}\n━━━━━━━━━━━━━━━━━━\n📚 방과후 기록 (${d.actType||'방과후'})\n`;
+  if(d.endTime)m+=`⏰ 종료 시간: ${d.endTime}\n`;
+  m+='\n';
+  if(d.subjects?.length)m+=`📌 과목: ${d.subjects.join(', ')}\n\n`;
+  if(d.content)m+=`📝 공부한 내용:\n${d.content}\n\n`;
+  if(d.hard)m+=`🤔 어려웠던 부분:\n${d.hard}\n\n`;
+  m+=`🪞 나의 태도 & 평가\n`;
+  if(d.mood)m+=`• 태도: ${MMAP[d.mood]}\n`;
+  if(d.focus)m+=`• 집중도: ${sstars(d.focus)}\n`;
+  if(d.effort)m+=`• 노력도: ${sstars(d.effort)}\n`;
+  if(d.body)m+=`• 몸 컨디션: ${bstars(d.body)}\n`;
+  if(d.eval)m+=`• 자기 평가: ${d.eval}\n`;
+  if(d.memo)m+=`\n📌 메모: ${d.memo}\n`;
+  if(d.pledge)m+=`\n✍️ 나의 다짐:\n"${d.pledge}"`;
+  return m.trim();
+}
+function fmtToday(){
+  const t=getRec()[dk]||{};if(!t.school&&!t.after)return null;
+  let m=`📋 은율 Daily Log | ${dl}\n━━━━━━━━━━━━━━━━━━\n\n`;
+  if(t.school){
+    const d=t.school;m+=`🏫 학교 수업 기록\n`;
+    if(d.endTime)m+=`⏰ 종료: ${d.endTime}\n`;
+    if(d.subjects?.length)m+=`📌 ${d.subjects.join(', ')}\n`;
+    if(d.content)m+=`📝 ${d.content}\n`;
+    if(d.hard)m+=`🤔 ${d.hard}\n`;
+    if(d.mood)m+=`• 태도: ${MMAP[d.mood]}\n`;
+    if(d.focus)m+=`• 집중도: ${sstars(d.focus)}\n`;
+    if(d.effort)m+=`• 노력도: ${sstars(d.effort)}\n`;
+    if(d.body)m+=`• 몸 컨디션: ${bstars(d.body)}\n`;
+    if(d.eval)m+=`• 자기 평가: ${d.eval}\n`;
+    if(d.memo)m+=`📌 메모: ${d.memo}\n`;
+    if(d.pledge)m+=`✍️ "${d.pledge}"\n`;
+  }
+  if(t.school&&t.after)m+=`\n━━━━━━━━━━━━━━━━━━\n\n`;
+  if(t.after){
+    const d=t.after;m+=`📚 방과후 기록 (${d.actType||'방과후'})\n`;
+    if(d.endTime)m+=`⏰ 종료: ${d.endTime}\n`;
+    if(d.subjects?.length)m+=`📌 ${d.subjects.join(', ')}\n`;
+    if(d.content)m+=`📝 ${d.content}\n`;
+    if(d.hard)m+=`🤔 ${d.hard}\n`;
+    if(d.mood)m+=`• 태도: ${MMAP[d.mood]}\n`;
+    if(d.focus)m+=`• 집중도: ${sstars(d.focus)}\n`;
+    if(d.effort)m+=`• 노력도: ${sstars(d.effort)}\n`;
+    if(d.body)m+=`• 몸 컨디션: ${bstars(d.body)}\n`;
+    if(d.eval)m+=`• 자기 평가: ${d.eval}\n`;
+    if(d.memo)m+=`📌 메모: ${d.memo}\n`;
+    if(d.pledge)m+=`✍️ "${d.pledge}"\n`;
+  }
+  return m.trim();
+}
+
+// KAKAO OPEN
+async function openKakao(txt){
+  if(!txt){toast('먼저 내용을 입력해주세요 📝');return;}
+  try{await navigator.clipboard.writeText(txt);}
+  catch{const ta=document.createElement('textarea');ta.value=txt;ta.style.cssText='position:fixed;opacity:0;top:0;left:0;';document.body.appendChild(ta);ta.focus();ta.select();try{document.execCommand('copy');}catch{}document.body.removeChild(ta);}
+  toast('💬 복사 완료! 채팅창에 붙여넣기 하세요',true);
+  setTimeout(()=>window.open(KAKAO,'_blank'),700);
+}
+function sendSchool(){
+  const d=colSc();
+  if(!d.content&&!d.subjects.length&&!d.pledge&&!d.endTime){toast('학교 기록을 먼저 입력해주세요 📝');return;}
+  openKakao(fmtSc(d,dl));
+}
+function sendAfter(){
+  const d=colAf();
+  if(!d.content&&!d.subjects.length&&!d.pledge&&!d.endTime){toast('방과후 기록을 먼저 입력해주세요 📝');return;}
+  openKakao(fmtAf(d,dl));
+}
+function sendToday(){const m=fmtToday();if(!m){toast('오늘 저장된 기록이 없어요 📝');return;}openKakao(m);}
+
+// RECORDS
+function renderRec(){
+  const r=getRec();const keys=Object.keys(r).sort().reverse();
+  document.getElementById('totCnt').textContent=keys.length;
+  const c=document.getElementById('recList');
+  if(!keys.length){c.innerHTML=`<div class="empty"><div class="ei">📓</div><p>아직 기록이 없어요.<br>오늘부터 시작해봐요!</p></div>`;return;}
+  c.innerHTML=keys.map(k=>{
+    const rec=r[k];const d=new Date(k);
+    const ds=`${d.getMonth()+1}월 ${d.getDate()}일 (${DAYS[d.getDay()]})`;
+    const sc=rec.school;const af=rec.after;
+    const badges=(sc?`<span class="recbadge sc">🏫 학교${sc.endTime?' '+sc.endTime:''}</span>`:'')+(af?`<span class="recbadge af">📚 ${af.actType||'방과후'}${af.endTime?' '+af.endTime:''}</span>`:'');
+    const pl=sc?.pledge||af?.pledge||'';
+    return `<div class="recitem" onclick="openRec('${k}')"><div class="recdate">${ds}</div><div class="recbadges">${badges}</div>${pl?`<div class="recpl">"${pl}"</div>`:''}</div>`;
+  }).join('');
+}
+
+function msec(label,val){if(!val&&val!==0)return'';return`<div class="msec"><div class="mslabel">${label}</div><div class="mscontent">${val}</div></div>`;}
+
+function openRec(key){
+  const r=getRec()[key];if(!r)return;
+  S.modalKey=key;
+  const d=new Date(key);
+  document.getElementById('mtitle').textContent='📓 Daily Log';
+  document.getElementById('mdatelbl').textContent=`${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 (${DAYS[d.getDay()]})`;
+  let html='';
+  if(r.school){
+    const s=r.school;html+=`<div class="mbhdr sc">🏫 학교 수업 기록</div>`;
+    if(s.endTime)html+=msec('종료 시간',s.endTime);
+    html+=msec('수업 과목',s.subjects?.join(', '));
+    html+=msec('배운 내용',s.content);html+=msec('어려웠던 내용',s.hard);
+    html+=msec('태도',s.mood?MMAP[s.mood]:null);
+    html+=msec('집중도',sstars(s.focus));html+=msec('노력도',sstars(s.effort));html+=msec('몸 컨디션',bstars(s.body));
+    html+=msec('자기 평가',s.eval);html+=msec('메모',s.memo);
+    if(s.pledge)html+=`<div class="msec"><div class="mslabel">나의 다짐</div><div class="mplbox">"${s.pledge}"</div></div>`;
+  }
+  if(r.school&&r.after)html+='<div class="mdiv"></div>';
+  if(r.after){
+    const a=r.after;html+=`<div class="mbhdr af">📚 방과후 (${a.actType||'방과후'})</div>`;
+    if(a.endTime)html+=msec('종료 시간',a.endTime);
+    html+=msec('과목',a.subjects?.join(', '));
+    html+=msec('공부한 내용',a.content);html+=msec('어려웠던 부분',a.hard);
+    html+=msec('태도',a.mood?MMAP[a.mood]:null);
+    html+=msec('집중도',sstars(a.focus));html+=msec('노력도',sstars(a.effort));html+=msec('몸 컨디션',bstars(a.body));
+    html+=msec('자기 평가',a.eval);html+=msec('메모',a.memo);
+    if(a.pledge)html+=`<div class="msec"><div class="mslabel">나의 다짐</div><div class="mafplbox">"${a.pledge}"</div></div>`;
+  }
+  document.getElementById('mbody').innerHTML=html;
+
+  // 모달 카카오 버튼 — 학교/방과후 따로
+  const kb=document.getElementById('mkbtns');
+  let btns='';
+  if(r.school)btns+=`<button class="mkbtn${!r.after?' single':''}" onclick="sendModalSc()">💬 학교 기록 공유</button>`;
+  if(r.after)btns+=`<button class="mkbtn${!r.school?' single':''}" onclick="sendModalAf()">💬 방과후 공유</button>`;
+  kb.innerHTML=btns;
+
+  document.getElementById('moverlay').classList.add('open');
+}
+function sendModalSc(){
+  const k=S.modalKey;const r=getRec()[k];if(!r?.school)return;
+  const d=new Date(k);const dl2=`${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 (${DAYS[d.getDay()]})`;
+  openKakao(fmtSc(r.school,dl2));
+}
+function sendModalAf(){
+  const k=S.modalKey;const r=getRec()[k];if(!r?.after)return;
+  const d=new Date(k);const dl2=`${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 (${DAYS[d.getDay()]})`;
+  openKakao(fmtAf(r.after,dl2));
+}
+function mclick(e){if(e.target===document.getElementById('moverlay'))closeM();}
+function closeM(){document.getElementById('moverlay').classList.remove('open');}
+
+// TOAST
+function toast(msg,kk=false){
+  const t=document.getElementById('toast');t.textContent=msg;
+  t.className='toast'+(kk?' kk':'')+' show';
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// PWA ICON
+(function setupPWA(){
+  const c=document.createElement('canvas');c.width=512;c.height=512;const x=c.getContext('2d');
+  x.beginPath();const rr=90;
+  x.moveTo(rr,0);x.lineTo(512-rr,0);x.quadraticCurveTo(512,0,512,rr);x.lineTo(512,512-rr);x.quadraticCurveTo(512,512,512-rr,512);x.lineTo(rr,512);x.quadraticCurveTo(0,512,0,512-rr);x.lineTo(0,rr);x.quadraticCurveTo(0,0,rr,0);x.closePath();
+  x.fillStyle='#1B4332';x.fill();
+  const g=x.createRadialGradient(380,120,0,380,120,250);g.addColorStop(0,'rgba(200,150,62,0.28)');g.addColorStop(1,'transparent');x.fillStyle=g;x.fillRect(0,0,512,512);
+  x.fillStyle='#F0C97A';x.font='bold 120px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('은율',256,180);
+  x.fillStyle='rgba(255,255,255,.55)';x.font='500 46px sans-serif';x.fillText('Daily Log',256,278);
+  x.fillStyle='#C8963E';x.fillRect(80,330,352,7);
+  const icon=c.toDataURL('image/png');
+  const mf={name:'은율 Daily Log',short_name:'은율 Daily Log',start_url:'./',display:'standalone',orientation:'portrait',background_color:'#1B4332',theme_color:'#1B4332',icons:[{src:icon,sizes:'192x192',type:'image/png',purpose:'any maskable'},{src:icon,sizes:'512x512',type:'image/png',purpose:'any maskable'}]};
+  const ml=document.createElement('link');ml.rel='manifest';ml.href=URL.createObjectURL(new Blob([JSON.stringify(mf)],{type:'application/json'}));document.head.appendChild(ml);
+  const al=document.createElement('link');al.rel='apple-touch-icon';al.href=icon;document.head.appendChild(al);
+  const fl=document.createElement('link');fl.rel='icon';fl.type='image/png';fl.href=icon;document.head.appendChild(fl);
+  if('serviceWorker' in navigator){const sw=`self.addEventListener('install',e=>self.skipWaiting());self.addEventListener('activate',e=>clients.claim());self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'}))).catch(()=>{});}
+})();
+
+// INIT
+loadToday();
+updHome();updStreak();updPledge();
+
+// 앱 닫기 직전 저장
+window.addEventListener('beforeunload',()=>{autoSave('sc');autoSave('af');});
+window.addEventListener('pagehide',()=>{autoSave('sc');autoSave('af');});
+</script>
+</body>
+</html>
